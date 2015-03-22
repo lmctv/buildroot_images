@@ -1,0 +1,3 @@
+#!/bin/sh
+
+dd if=/dev/urandom of=${TARGET_DIR}/etc/random-seed bs=512 count=1

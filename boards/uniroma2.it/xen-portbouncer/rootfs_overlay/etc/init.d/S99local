@@ -1,0 +1,30 @@
+#! /bin/sh
+
+case "$1" in
+    start|"")
+        if [ "$VERBOSE" != no ]
+        then
+            echo -n "Executing local startup script..."
+        fi
+        if [ -x /etc/rc.local ]
+        then
+            /etc/rc.local $1
+            [ "$VERBOSE" != no ] && echo "done."
+        fi
+        ;;
+    stop)
+        if [ "$VERBOSE" != no ]
+        then
+            echo -n "Executing local stop script..."
+        fi
+        if [ -x /etc/rc.local ]
+        then
+            /etc/rc.local $1
+            [ "$VERBOSE" != no ] && echo "done."
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# set -x
+
+if [ "x$DEBUG" != "x" ]; then
+    ECHO=echo
+else
+    ECHO=""
+fi
+
+setif () {
+    iface="eth${1}"
+    addr="${2}"
+    $ECHO ip addr add ${addr} dev ${iface}
+    $ECHO ip link set dev ${iface} up
+}
+
+setgw () {
+    $ECHO ip route add default via ${1}
+}
+
+forward () {
+    tmpme=$1
+    shift
+    tgt=$1
+    shift
+    me="${tmpme%%/*}"
+    [ "x$DEBUG" != "x" ] && echo target: $target
+    echo "$@"
+    for port in "$@"; do
+        lcl="${port%%/*}"
+        rmt="${port#*/}"
+        [ "x$DEBUG" != "x" ] && echo $lcl "->" $rmt
+        $ECHO /usr/sbin/iptables -t nat -A PREROUTING -p tcp -m tcp -d $me --dport $lcl -j DNAT --to-destination ${target}:${rmt}
+    done
+    $ECHO /usr/sbin/iptables -t nat -A POSTROUTING -j MASQUERADE
+}
+
+set -- $(cat /proc/cmdline)
+ports=""
+for x in "$@"; do
+    [ "x$DEBUG" != "x" ] && echo $x
+    case "$x" in
+        ip[01]=*)
+            ip="${x#ip[01]=}"
+            ipidx="${x%%=*}"
+            idx="${ipidx#ip}"
+            setif "$idx" "$ip"
+            if [ "x$idx" == "x0" ]; then
+                me=$ip
+            fi
+        ;;
+        gw=*)
+            gw="${x#gw=}"
+        ;;
+        port=*)
+            port="${x#port=}"
+	    if [ "x$ports" != "x" ]; then
+		ports="${ports} ${port}"
+	    else
+		ports="${port}"
+	    fi
+        ;;
+        target=*)
+            target="${x#target=}"
+        ;;
+        *)
+            :
+        ;;
+    esac
+done
+
+setgw $gw
+forward ${me} ${target} ${ports}
+
+echo Active addresses
+echo ================
+ip addr list
+
+echo Active routes
+echo =============
+ip route list
+
+echo Active rules
+echo ============
+iptables-save
+

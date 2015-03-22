@@ -1,0 +1,15 @@
+In this repository you'll find some working buildroot configurations
+to build application-specific intramfs images.
+
+portbouncer
+===========
+Buildroot configuration for a simple port-forwarding
+linux system, meant to be used as a xen-pv system
+
+Should be used as a general buildroot external customization layer
+Tested with buildroot-2015.2
+
+The required configuration can by enabled by executing
+
+  $ make BR2_EXTERNAL=<path_to_this_repo> xen-portbouncer_defconfig
+
